@@ -2,95 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+/* Intelligence Dashboard Design System */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Intelligence Theme Colors */
+    --background: 218 27% 8%;
+    --background-secondary: 217 28% 12%;
+    --background-tertiary: 216 29% 16%;
+    --foreground: 213 27% 84%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Intelligence Branding */
+    --intel-cyan: 183 100% 50%;
+    --intel-cyan-dark: 183 100% 35%;
+    --intel-cyan-light: 183 100% 65%;
+    --intel-blue: 217 91% 60%;
+    --intel-blue-dark: 217 91% 45%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Tactical Status Colors */
+    --threat-low: 142 76% 36%;
+    --threat-medium: 43 89% 38%;
+    --threat-high: 1 83% 63%;
+    --threat-severe: 300 84% 33%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Card and Components */
+    --card: 217 28% 12%;
+    --card-foreground: 213 27% 84%;
+    --card-header: 216 29% 16%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --popover: 217 28% 12%;
+    --popover-foreground: 213 27% 84%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Interactive Elements */
+    --primary: 183 100% 50%;
+    --primary-foreground: 218 27% 8%;
+    --primary-glow: 183 100% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 28% 18%;
+    --secondary-foreground: 213 27% 84%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --muted: 217 28% 15%;
+    --muted-foreground: 215 16% 47%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 218 27% 8%;
+
+    --destructive: 1 83% 63%;
+    --destructive-foreground: 213 27% 84%;
+
+    /* Borders and Inputs */
+    --border: 217 28% 18%;
+    --input: 217 28% 15%;
+    --ring: 183 100% 50%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Gradients */
+    --gradient-intel: linear-gradient(135deg, hsl(var(--intel-cyan)), hsl(var(--intel-blue)));
+    --gradient-threat: linear-gradient(90deg, hsl(var(--threat-low)), hsl(var(--threat-high)));
+    --gradient-tactical: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background-secondary)));
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Animations & Effects */
+    --transition-tactical: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-intel: 0 10px 40px -15px hsl(var(--intel-cyan) / 0.3);
+    --shadow-threat: 0 8px 32px -12px hsl(var(--threat-high) / 0.25);
+    --glow-intel: 0 0 20px hsl(var(--intel-cyan) / 0.5);
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Typography Scale */
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'Inter', system-ui, sans-serif;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Same values - this is a dark-first design */
+    --background: 218 27% 8%;
+    --background-secondary: 217 28% 12%;
+    --background-tertiary: 216 29% 16%;
+    --foreground: 213 27% 84%;
   }
 }
 
@@ -100,6 +89,97 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    background: hsl(var(--background));
+  }
+
+  /* Intelligence Typography */
+  .intel-display {
+    @apply text-4xl md:text-5xl font-bold tracking-tight;
+    background: var(--gradient-intel);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .intel-mono {
+    font-family: var(--font-mono);
+    @apply text-sm tracking-wide;
+  }
+
+  /* Tactical Components */
+  .tactical-card {
+    @apply bg-card border border-border rounded-lg shadow-lg;
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background-tertiary)) 100%);
+    box-shadow: var(--shadow-intel);
+  }
+
+  .tactical-button {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium;
+    @apply transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring;
+    transition: var(--transition-tactical);
+  }
+
+  .tactical-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-intel);
+  }
+
+  /* Threat Level Indicators */
+  .threat-low {
+    @apply bg-green-600 text-green-50;
+    background-color: hsl(var(--threat-low));
+  }
+
+  .threat-medium {
+    @apply bg-yellow-600 text-yellow-50;
+    background-color: hsl(var(--threat-medium));
+  }
+
+  .threat-high {
+    @apply bg-red-600 text-red-50;
+    background-color: hsl(var(--threat-high));
+  }
+
+  .threat-severe {
+    @apply bg-purple-600 text-purple-50;
+    background-color: hsl(var(--threat-severe));
+  }
+
+  /* Status Indicators */
+  .status-online {
+    @apply bg-green-500;
+    box-shadow: 0 0 10px hsl(var(--threat-low) / 0.6);
+  }
+
+  .status-offline {
+    @apply bg-red-500;
+    box-shadow: 0 0 10px hsl(var(--threat-high) / 0.6);
+  }
+
+  /* Intel Input Fields */
+  .intel-input {
+    @apply bg-input border border-border rounded-md px-3 py-2 text-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+    @apply placeholder:text-muted-foreground;
+    transition: var(--transition-tactical);
+  }
+
+  .intel-input:focus {
+    box-shadow: var(--glow-intel);
+  }
+
+  /* Scrollbars */
+  .intel-scroll::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .intel-scroll::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  .intel-scroll::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full hover:bg-border/80;
   }
 }
