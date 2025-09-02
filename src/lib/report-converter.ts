@@ -86,29 +86,50 @@ export class ReportConverter {
   private getDefaults() {
     return {
       actionMap: {
-        "ambush": ["ambush"],
-        "sb attk": ["suicide bomber", "sb"],
-        "fire raid": ["sniper", "laser", "gl", "fire raid", "shot", "gunmen", "motorcyclist"],
+        "ambush": ["ambush", "ambushed"],
+        "sb attk": ["suicide bomber", "sb attk", "sb"],
+        "fire raid": ["sniper", "laser", "gl", "fire raid", "shot", "gunmen", "motorcyclist", "sniper fire"],
         "blast": ["mine", "ied", "blast"],
         "strike": ["missile", "drone"],
-        "raid": ["raid", "cp attack", "post attack", "attacked", "attk on", "hideout", "ambushed"],
-        "tgt attk": ["targeted", "target attk"],
-        "repulse": ["repulse"]
+        "raid": ["raid", "cp attack", "post attack", "attacked", "attk on", "hideout"],
+        "tgt attk": ["targeted", "target attk", "shot dead", "martyred"],
+        "repulse": ["repulse"],
+        "claimed attk": ["claimed"]
       },
       targetMap: {
-        "SFs cny": ["convoy", "cny"],
-        "SFs Post/CP": ["post", "cp", "checkpost", "observation post"],
-        "LEAs": ["police", "asi"],
-        "Army": ["army"],
-        "SFs": ["sfs", "security forces", "military"]
+        "SFs cny": ["convoy", "cny", "military convoy"],
+        "SFs Post/CP": ["post", "cp", "checkpost", "observation post", "bungalow", "bungla"],
+        "LEAs": ["police", "policeman", "police station", "ps"],
+        "Army": ["army", "military"],
+        "SFs": ["sfs", "security forces", "sf", "mil"],
+        "CTD": ["ctd"],
+        "FC": ["fc"],
+        "PC": ["police constable", "constable"],
+        "ASI": ["asi"]
       },
       locationCodes: {
         "Bannu": { "code": "Bxu", "lat": 32.98, "lon": 70.6 },
         "North Waziristan": { "code": "NWD", "lat": 32.96, "lon": 69.84 },
         "South Waziristan": { "code": "SWD", "lat": 32.42, "lon": 69.79 },
-        "Kurram": { "code": "Krm", "lat": 33.8, "lon": 70.1 }
+        "Kurram": { "code": "Krm", "lat": 33.8, "lon": 70.1 },
+        "Bajaur": { "code": "Bjr", "lat": 34.7, "lon": 71.1 },
+        "Khyber": { "code": "Khy", "lat": 34.0, "lon": 71.1 },
+        "Lakki Marwat": { "code": "Lki", "lat": 32.6, "lon": 70.9 },
+        "Karachi": { "code": "Kci", "lat": 24.86, "lon": 67.01 },
+        "Mardan": { "code": "Mdx", "lat": 34.2, "lon": 72.0 },
+        "Dir Lower": { "code": "DIL", "lat": 35.2, "lon": 71.9 },
+        "Dir Upper": { "code": "DIU", "lat": 35.8, "lon": 72.0 },
+        "Dera Ismail Khan": { "code": "DIK", "lat": 31.8, "lon": 70.9 },
+        "Panjgur": { "code": "Pjr", "lat": 26.97, "lon": 64.10 },
+        "Balochistan": { "code": "Bln", "lat": 28.4, "lon": 65.0 }
       },
-      militantGroups: ["FAK", "IMP", "BLA", "BLF", "FAH", "TTP"]
+      militantGroups: ["FAK", "IMP", "BLA", "BLF", "FAH", "TTP"],
+      locationCorrections: {
+        "Jhao": "Jhalo",
+        "Dosli": "Dosali",
+        "Patnr": "Patne",
+        "Spinwam": "Spenwam"
+      }
     };
   }
 
@@ -285,6 +306,35 @@ export class ReportConverter {
   private extractTarget(text: string, analysis: ReportAnalysis) {
     const lowerText = text.toLowerCase();
     
+    // Handle multiple posts/checkpoints
+    if ((lowerText.includes('post') && lowerText.includes('cp')) || 
+        (lowerText.match(/\b\w+\s+post.*\b\w+\s+cp\b/i))) {
+      analysis.t = 'SFs Post/CP';
+      return;
+    }
+
+    // Handle specific target types
+    if (lowerText.includes('ctd')) {
+      analysis.t = 'CTD';
+      return;
+    }
+
+    if (lowerText.includes('fc pers') || (lowerText.includes('fc') && lowerText.includes('post'))) {
+      analysis.t = 'FC';
+      return;
+    }
+
+    if (lowerText.includes('police constable') || lowerText.includes('pc ')) {
+      analysis.t = 'PC';
+      return;
+    }
+
+    if (lowerText.includes('asi ')) {
+      analysis.t = 'ASI';
+      return;
+    }
+
+    // Standard target mapping
     for (const [target, keywords] of Object.entries(this.tm)) {
       if (keywords.some(keyword => lowerText.includes(keyword))) {
         analysis.t = target;
@@ -292,37 +342,75 @@ export class ReportConverter {
       }
     }
 
+    // Normalize targets
     if (analysis.t === 'Army') analysis.t = 'SFs';
-    if (lowerText.includes('post') && lowerText.includes('cp')) {
-      analysis.t = 'SFs Post and CP';
-    }
+    if (analysis.t === 'PC' && lowerText.includes('at ')) analysis.t = 'LEAs';
+    if (analysis.t === 'ASI' && lowerText.includes('at ')) analysis.t = 'LEAs';
   }
 
   private extractLocation(text: string, analysis: ReportAnalysis) {
-    // Try district-area format first
-    let match = text.match(/(\w{3})-([\w\s]+)/);
+    // Apply location corrections first
+    let correctedText = text;
+    const corrections = this.defaultData.locationCorrections || {};
+    for (const [wrong, correct] of Object.entries(corrections)) {
+      correctedText = correctedText.replace(new RegExp(wrong, 'gi'), correct as string);
+    }
+
+    // Try district-area format first (e.g., "NWD-Dosli" -> "Dosali, NWD")
+    let match = correctedText.match(/(\w{3})-([\w\s]+)/);
     if (match) {
-      analysis.l = `${match[2].trim().replace(/bazar/i, '').trim()}, ${match[1].toUpperCase()}`;
+      let area = match[2].trim().replace(/bazar/i, 'Bazaar').trim();
+      analysis.l = `${area}, ${match[1].toUpperCase()}`;
       return;
+    }
+
+    // Handle complex location strings like "Tirah Valley, Khy"
+    match = correctedText.match(/(?:at|in|near)\s+([\w\s]+?),?\s*(\w{3})\b/i);
+    if (match) {
+      const area = match[1].replace(/bazar/i, 'Bazaar').replace(/(?:valley|area|tehsil|district)$/i, '').trim();
+      analysis.l = `${area}, ${match[2].toUpperCase()}`;
+      return;
+    }
+
+    // Handle "en-route" or convoy movement patterns
+    match = correctedText.match(/(?:from|to)\s+[\w\s]+(?:to|,)\s+([\w\s]+)/i);
+    if (match) {
+      const destination = match[1].trim();
+      for (const [location, data] of Object.entries(this.lc)) {
+        if (destination.toLowerCase().includes(location.toLowerCase())) {
+          analysis.l = `en-route to ${data.code}`;
+          return;
+        }
+      }
     }
 
     // Sort locations by length for better matching
     const sortedLocations = Object.keys(this.lc).sort((a, b) => b.length - a.length);
 
+    // Try to match area, location pattern
     for (const location of sortedLocations) {
       const regex = new RegExp(`([\\w\\s,]+?),?\\s*(${location.replace(/ /g, '\\s+')}(?:\\s+District|\\s+Tehsil)?)`, 'i');
-      match = text.match(regex);
+      match = correctedText.match(regex);
       if (match) {
-        const place = match[1].replace(/,$/, '').trim();
+        let place = match[1].replace(/,$/, '').replace(/bazar/i, 'Bazaar').trim();
         const code = this.lc[location].code;
         analysis.l = `${place}, ${code}`;
         return;
       }
     }
 
-    // Additional location extraction patterns...
+    // Match just the district/area codes
+    const locationCodes = Object.values(this.lc).map(v => v.code);
+    for (const code of locationCodes) {
+      if (correctedText.includes(code)) {
+        analysis.l = code;
+        return;
+      }
+    }
+
+    // Fallback to just location names
     for (const location of sortedLocations) {
-      if (text.toLowerCase().includes(location.toLowerCase())) {
+      if (correctedText.toLowerCase().includes(location.toLowerCase())) {
         analysis.l = this.lc[location].code;
         return;
       }
@@ -333,42 +421,86 @@ export class ReportConverter {
     const lowerText = text.toLowerCase();
     const results: Record<string, number> = {};
 
-    const patterns = [
-      { re: /(\d+)\s*x?\s*(sfs?|sldrs?|pc|police pers|fc pers|ctd pers|pers|policeman|constable|asi|personnel)?\s*(sh|killed|dead|martyred)/gi, type: 'sh' },
-      { re: /(\d+)\s*x?\s*(sfs?|sldrs?|pc|police pers|fc pers|ctd pers|pers|policeman|constable|asi|personnel)?\s*(inj|injured)/gi, type: 'inj' },
+    // Handle exaggerated claims specially
+    const exaggeratedMatch = lowerText.match(/exaggerated claims?\s+of\s+(\d+)\s*x?\s*sldrs?\s+sh,?\s*(\d+)\s*x?\s*inj/i);
+    if (exaggeratedMatch) {
+      analysis.c.add(`claims killing of ${exaggeratedMatch[1]} sldrs, ${exaggeratedMatch[2]} inj`);
+      return;
+    }
+
+    // Equipment and vehicles
+    const equipmentPatterns = [
+      { re: /(\d+)\s*x?\s*veh(?:icles?)?\s*destr(?:oyed)?/gi, type: 'vehs destr' },
+      { re: /(\d+)\s*x?\s*(?:truck|vehicle)s?\s*seized/gi, type: 'veh seized' },
+      { re: /qpt\s*destr/gi, type: 'A/QC destr and seized' },
+      { re: /(?:wpns?|weapons?)\s*seized/gi, type: 'W&A seized' }
+    ];
+
+    equipmentPatterns.forEach(pattern => {
+      let match;
+      const regex = new RegExp(pattern.re.source, 'gi');
+      while ((match = regex.exec(lowerText)) !== null) {
+        if (pattern.type === 'A/QC destr and seized' || pattern.type === 'W&A seized') {
+          analysis.c.add(pattern.type);
+        } else {
+          const quantity = parseInt(match[1] || '1', 10);
+          analysis.c.add(`${quantity} x ${pattern.type}`);
+        }
+      }
+    });
+
+    // Personnel casualties
+    const casualtyPatterns = [
+      { re: /(\d+)\s*x?\s*(sfs?|sldrs?|sf\s*pers|security\s*forces?)?\s*(sh|killed|dead|martyred)/gi, type: 'sh' },
+      { re: /(\d+)\s*x?\s*(sfs?|sldrs?|sf\s*pers|security\s*forces?)?\s*(inj|injured)/gi, type: 'inj' },
+      { re: /(\d+)\s*x?\s*(pc|police\s*constable|constables?)?\s*(sh|killed|dead|martyred)/gi, type: 'PC sh' },
+      { re: /(\d+)\s*x?\s*(pc|police\s*constable|constables?)?\s*(inj|injured)/gi, type: 'PC inj' },
+      { re: /(\d+)\s*x?\s*(asi|assistant\s*sub\s*inspector)?\s*(sh|killed|dead|martyred)/gi, type: 'ASI sh' },
+      { re: /(\d+)\s*x?\s*(fc\s*pers|fc)?\s*(sh|killed|dead|martyred)/gi, type: 'FC pers sh' },
+      { re: /(\d+)\s*x?\s*(fc\s*pers|fc)?\s*(inj|injured)/gi, type: 'FC pers inj' },
+      { re: /(\d+)\s*x?\s*(ctd\s*pers|ctd)?\s*(sh|killed|dead|martyred)/gi, type: 'CTD pers sh' },
+      { re: /(\d+)\s*x?\s*(leas?\s*pers|police\s*pers)?\s*(sh|killed|dead|martyred)/gi, type: 'LEAs pers sh' },
+      { re: /(\d+)\s*x?\s*(leas?\s*pers|police\s*pers)?\s*(inj|injured)/gi, type: 'LEAs pers inj' },
       { re: /(\d+)\s*x?\s*(ts?|ks?|terrorists?|militants?)\s*(sh|killed|dead)/gi, type: 'Ts killed' },
       { re: /(\d+)\s*x?\s*(ts?|ks?|terrorists?|militants?)\s*(inj|injured)/gi, type: 'Ts inj' }
     ];
 
-    patterns.forEach(pattern => {
+    casualtyPatterns.forEach(pattern => {
       let match;
       const regex = new RegExp(pattern.re.source, 'gi');
       while ((match = regex.exec(lowerText)) !== null) {
         const quantity = parseInt(match[1] || '1', 10);
-        let key = pattern.type;
+        let casualtyType = pattern.type;
         
-        if (pattern.type === 'sh' || pattern.type === 'inj') {
-          const entity = match[2] ? match[2].toLowerCase() : '';
-          let entityKey = 'sldrs';
-          
-          if (['pc', 'police constable', 'policeman', 'constable', 'asi'].includes(entity)) {
-            entityKey = 'PC';
-          } else if (entity.includes('fc')) {
-            entityKey = 'FC pers';
-          } else if (entity.includes('police') || entity.includes('leas')) {
-            entityKey = 'LEAs pers';
+        // Handle generic casualties based on target context
+        if (!match[2] && (pattern.type === 'sh' || pattern.type === 'inj')) {
+          let inferredType = 'sldrs';
+          if (analysis.t) {
+            if (analysis.t.includes('LEAs') || analysis.t.includes('police')) inferredType = 'LEAs pers';
+            else if (analysis.t.includes('FC')) inferredType = 'FC pers';
+            else if (analysis.t.includes('CTD')) inferredType = 'CTD pers';
+            else if (analysis.t === 'PC') inferredType = 'PC';
+            else if (analysis.t === 'ASI') inferredType = 'ASI';
           }
-          
-          key = `${entityKey} ${pattern.type}`;
+          casualtyType = `${inferredType} ${pattern.type}`;
         }
         
-        results[key] = (results[key] || 0) + quantity;
+        results[casualtyType] = (results[casualtyType] || 0) + quantity;
       }
     });
 
+    // Handle generic "casualties reported" patterns
+    if ((lowerText.includes('cas reported') || lowerText.includes('cas rptd')) && !Object.keys(results).length) {
+      analysis.c.add('multiple cas reported');
+    } else if (lowerText.includes('poss cas') && !Object.keys(results).length) {
+      analysis.c.add('multiple cas likely');
+    } else if (lowerText.includes('additional cas')) {
+      analysis.c.add('additional cas likely');
+    }
+
+    // Add formatted casualties
     for (const [key, value] of Object.entries(results)) {
-      const standalone = ["pers abducted", "IED defused", "W&A seized"].includes(key);
-      analysis.c.add(standalone ? key : `${value} x ${key}`);
+      analysis.c.add(`${value} x ${key}`);
     }
   }
 
@@ -380,7 +512,10 @@ export class ReportConverter {
       { re: /(?:intense|heavy)\s*(?:exchange of )?fire/i, detail: 'intense EoF' },
       { re: /search\s*(?:and clearance )?op(?:eration)?(?:s)?\s*(?:underway|conducted|launched)/i, detail: 'search op underway' },
       { re: /area\s*(?:has been\s*)?(?:cordoned|sealed)/i, detail: 'area cordoned' },
-      { re: /attackers?\s*(?:managed to )?fled|fled the area/i, detail: 'attackers fled' }
+      { re: /attackers?\s*(?:managed to )?fled|fled the area/i, detail: 'attackers fled' },
+      { re: /house\s*set\s*on\s*fire/i, detail: 'house set on fire' },
+      { re: /abducted\s*(?:his\s*)?(\d+)\s*nephews?/i, detail: (match: RegExpMatchArray) => `${match[1]} pers abducted` },
+      { re: /hideout/i, detail: 'HO' }
     ];
 
     detailPatterns.forEach(pattern => {
@@ -396,13 +531,34 @@ export class ReportConverter {
     const match = text.match(/(@[A-Za-z]+)\s*$/);
     if (match) {
       analysis.s = match[1];
+    } else if (!match && !text.includes('@')) {
+      // Add default source for reports without explicit source
+      analysis.s = '@X';
+    }
+
+    // Handle social media sources
+    if (text.toLowerCase().includes('sources report') || text.toLowerCase().includes('militant sources')) {
+      const group = analysis.w !== 'Unknown Ts' ? analysis.w : 'FAH';
+      analysis.s = `@${group} SM`;
     }
   }
 
   private assembleReport(analysis: ReportAnalysis): string {
     let target = analysis.t ? `on ${analysis.t}` : '';
+    
+    // Handle special target formatting
     if (analysis.d.has('alleged') && analysis.t) {
       target = `on alleged ${analysis.t}`;
+    }
+    
+    // Handle CTD hideout -> CTD HO
+    if (analysis.t === 'CTD' && analysis.d.has('HO')) {
+      target = 'on CTD HO';
+    }
+
+    // Handle police station -> PS
+    if (analysis.t === 'LEAs' && target.includes('police station')) {
+      target = target.replace('police station', 'PS');
     }
 
     let location = analysis.l ? `at ${analysis.l}` : '';
@@ -414,7 +570,9 @@ export class ReportConverter {
 
     let details = '';
     if (analysis.d.size > 0) {
-      const detailsArray = Array.from(analysis.d).filter(item => item !== 'alleged');
+      const detailsArray = Array.from(analysis.d).filter(item => 
+        item !== 'alleged' && item !== 'HO'
+      );
       if (detailsArray.length > 0) {
         details = `, ${detailsArray.join(', ')}`;
       }
@@ -424,7 +582,14 @@ export class ReportConverter {
     let notes = analysis.notes ? ` [Notes: ${analysis.notes}]` : '';
 
     let report = `${analysis.w} ${analysis.ac} ${target} ${location}${details}${casualties}${source}${notes}`;
-    return report.replace(/\s+/g, ' ').replace(' .', '.').trim();
+    
+    // Clean up formatting
+    report = report.replace(/\s+/g, ' ')
+                  .replace(' .', '.')
+                  .replace(/\bat\s+([^,]+),?\s*([A-Z]{3})\b/g, 'at $1, $2')
+                  .trim();
+    
+    return report;
   }
 
   public saveTables() {
