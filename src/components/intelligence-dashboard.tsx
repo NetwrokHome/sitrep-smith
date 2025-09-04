@@ -27,6 +27,8 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({
   });
   const [forecast, setForecast] = useState<string>('Insufficient data for a reliable forecast. Need more recent reports.');
 
+  console.log('Dashboard rendered, reports:', reports.length);
+
   useEffect(() => {
     const saved = localStorage.getItem('validatedReports');
     if (saved) {
