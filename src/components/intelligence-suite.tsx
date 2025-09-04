@@ -63,11 +63,14 @@ export const IntelligenceSuite: React.FC = () => {
           </p>
           
           {/* Navigation */}
-          <div className="absolute top-0 right-0 flex space-x-2">
+          <div className="absolute top-0 right-0 flex space-x-2 z-20">
             <Button
               variant={getViewButtonVariant('generator')}
               size="sm"
-              onClick={() => setCurrentView('generator')}
+              onClick={() => {
+                console.log('Generator button clicked!');
+                setCurrentView('generator');
+              }}
               className="hidden sm:flex"
             >
               <FileText />
@@ -76,7 +79,10 @@ export const IntelligenceSuite: React.FC = () => {
             <Button
               variant={getViewButtonVariant('generator')}
               size="icon"
-              onClick={() => setCurrentView('generator')}
+              onClick={() => {
+                console.log('Generator icon button clicked!');
+                setCurrentView('generator');
+              }}
               className="sm:hidden"
             >
               <FileText />
@@ -85,7 +91,10 @@ export const IntelligenceSuite: React.FC = () => {
             <Button
               variant={getViewButtonVariant('dashboard')}
               size="sm"
-              onClick={() => setCurrentView('dashboard')}
+              onClick={() => {
+                console.log('Dashboard button clicked!');
+                setCurrentView('dashboard');
+              }}
               className="hidden sm:flex"
             >
               <LayoutDashboard />
@@ -94,7 +103,10 @@ export const IntelligenceSuite: React.FC = () => {
             <Button
               variant={getViewButtonVariant('dashboard')}
               size="icon"
-              onClick={() => setCurrentView('dashboard')}
+              onClick={() => {
+                console.log('Dashboard icon button clicked!');
+                setCurrentView('dashboard');
+              }}
               className="sm:hidden"
             >
               <LayoutDashboard />
@@ -103,7 +115,10 @@ export const IntelligenceSuite: React.FC = () => {
             <Button
               variant={getViewButtonVariant('admin')}
               size="sm"
-              onClick={() => setCurrentView('admin')}
+              onClick={() => {
+                console.log('Admin button clicked!');
+                setCurrentView('admin');
+              }}
               className="hidden sm:flex"
             >
               <Settings />
@@ -112,7 +127,10 @@ export const IntelligenceSuite: React.FC = () => {
             <Button
               variant={getViewButtonVariant('admin')}
               size="icon"
-              onClick={() => setCurrentView('admin')}
+              onClick={() => {
+                console.log('Admin icon button clicked!');
+                setCurrentView('admin');
+              }}
               className="sm:hidden"
             >
               <Settings />
