@@ -192,7 +192,10 @@ export class ReportConverter {
     score += this.threatWeights.actions[analysis.ac] || 3;
     score += this.threatWeights.targets[analysis.t || ''] || 2;
     
-    analysis.c.forEach(cas => {
+    // Ensure c is a Set - fix for localStorage deserialization
+    const casualties = analysis.c instanceof Set ? analysis.c : new Set(Array.isArray(analysis.c) ? analysis.c : []);
+    
+    casualties.forEach(cas => {
       const match = cas.match(/(\d+)\s*x\s*.*\s*(sh|inj|Ts killed)/);
       if (match) {
         const type = match[2];
@@ -248,8 +251,9 @@ export class ReportConverter {
       }
     }
 
-    // Casualties check
-    if (analysis.c.size === 0 && rawInput && (rawInput.toLowerCase().includes('cas') || rawInput.toLowerCase().includes('casualties'))) {
+    // Casualties check - ensure c is a Set
+    const casualties = analysis.c instanceof Set ? analysis.c : new Set(Array.isArray(analysis.c) ? analysis.c : []);
+    if (casualties.size === 0 && rawInput && (rawInput.toLowerCase().includes('cas') || rawInput.toLowerCase().includes('casualties'))) {
       suggestions.push({
         text: 'Report mentions casualties but none were parsed. Add details?',
         action: 'focusField',
@@ -564,13 +568,17 @@ export class ReportConverter {
     let location = analysis.l ? `at ${analysis.l}` : '';
     let casualties = '';
     
-    if (analysis.c.size > 0) {
-      casualties = `; ${Array.from(analysis.c).join(', ')}`;
+    // Ensure c is a Set - fix for localStorage deserialization
+    const casualtiesSet = analysis.c instanceof Set ? analysis.c : new Set(Array.isArray(analysis.c) ? analysis.c : []);
+    if (casualtiesSet.size > 0) {
+      casualties = `; ${Array.from(casualtiesSet).join(', ')}`;
     }
 
     let details = '';
-    if (analysis.d.size > 0) {
-      const detailsArray = Array.from(analysis.d).filter(item => 
+    // Ensure d is a Set - fix for localStorage deserialization
+    const detailsSet = analysis.d instanceof Set ? analysis.d : new Set(Array.isArray(analysis.d) ? analysis.d : []);
+    if (detailsSet.size > 0) {
+      const detailsArray = Array.from(detailsSet).filter(item => 
         item !== 'alleged' && item !== 'HO'
       );
       if (detailsArray.length > 0) {

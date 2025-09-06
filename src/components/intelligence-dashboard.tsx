@@ -34,9 +34,18 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({
     if (saved) {
       try {
         const validatedReports: ValidatedReport[] = JSON.parse(saved);
-        setReports(validatedReports);
-        calculateKPIs(validatedReports);
-        generateForecast(validatedReports);
+        // Fix Set deserialization issue - convert arrays back to Sets
+        const fixedReports = validatedReports.map(report => ({
+          ...report,
+          analysis: {
+            ...report.analysis,
+            c: new Set(Array.isArray(report.analysis.c) ? report.analysis.c : []),
+            d: new Set(Array.isArray(report.analysis.d) ? report.analysis.d : [])
+          }
+        }));
+        setReports(fixedReports);
+        calculateKPIs(fixedReports);
+        generateForecast(fixedReports);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       }

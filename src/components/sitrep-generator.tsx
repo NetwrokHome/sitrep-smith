@@ -41,7 +41,17 @@ export const SitrepGenerator: React.FC<SitrepGeneratorProps> = ({ converter }) =
     const saved = localStorage.getItem('validatedReports');
     if (saved) {
       try {
-        setValidatedLog(JSON.parse(saved));
+        const validatedReports = JSON.parse(saved);
+        // Fix Set deserialization issue - convert arrays back to Sets
+        const fixedReports = validatedReports.map(report => ({
+          ...report,
+          analysis: {
+            ...report.analysis,
+            c: new Set(Array.isArray(report.analysis.c) ? report.analysis.c : []),
+            d: new Set(Array.isArray(report.analysis.d) ? report.analysis.d : [])
+          }
+        }));
+        setValidatedLog(fixedReports);
       } catch (error) {
         console.error('Error loading validated reports:', error);
       }
