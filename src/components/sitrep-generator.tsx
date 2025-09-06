@@ -50,6 +50,8 @@ export const SitrepGenerator: React.FC<SitrepGeneratorProps> = ({ converter }) =
 
   useEffect(() => {
     localStorage.setItem('validatedReports', JSON.stringify(validatedLog));
+    // Notify other components that reports have been updated
+    window.dispatchEvent(new Event('reportsUpdated'));
   }, [validatedLog]);
 
   const handleConvert = async () => {

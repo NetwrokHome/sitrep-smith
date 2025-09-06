@@ -29,7 +29,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({
 
   console.log('Dashboard rendered, reports:', reports.length);
 
-  useEffect(() => {
+  const loadReports = () => {
     const saved = localStorage.getItem('validatedReports');
     if (saved) {
       try {
@@ -41,6 +41,31 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({
         console.error('Error loading dashboard data:', error);
       }
     }
+  };
+
+  useEffect(() => {
+    loadReports();
+
+    // Listen for storage changes from other tabs/components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'validatedReports') {
+        loadReports();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events (for same-tab updates)
+    const handleCustomUpdate = () => {
+      loadReports();
+    };
+    
+    window.addEventListener('reportsUpdated', handleCustomUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('reportsUpdated', handleCustomUpdate);
+    };
   }, []);
 
   const calculateKPIs = (reports: ValidatedReport[]) => {
