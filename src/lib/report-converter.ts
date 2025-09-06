@@ -133,11 +133,31 @@ export class ReportConverter {
     };
   }
 
-  private loadTables() {
-    this.am = JSON.parse(localStorage.getItem('actionMapping') || 'null') || this.defaultData.actionMap;
-    this.lc = JSON.parse(localStorage.getItem('locationCodes') || 'null') || this.defaultData.locationCodes;
-    this.tm = JSON.parse(localStorage.getItem('targetMapping') || 'null') || this.defaultData.targetMap;
-    this.m = JSON.parse(localStorage.getItem('militantGroups') || 'null') || this.defaultData.militantGroups;
+  private async loadTables() {
+    try {
+      const { db } = await import('./database');
+      const config = await db.loadConfiguration();
+      
+      if (config) {
+        this.am = config.action_mapping || this.defaultData.actionMap;
+        this.lc = config.location_codes || this.defaultData.locationCodes;
+        this.tm = config.target_mapping || this.defaultData.targetMap;
+        this.m = config.militant_groups || this.defaultData.militantGroups;
+      } else {
+        // Fall back to default data for new users
+        this.am = this.defaultData.actionMap;
+        this.lc = this.defaultData.locationCodes;
+        this.tm = this.defaultData.targetMap;
+        this.m = this.defaultData.militantGroups;
+      }
+    } catch (error) {
+      console.error('Error loading configuration from database:', error);
+      // Fall back to default data on error
+      this.am = this.defaultData.actionMap;
+      this.lc = this.defaultData.locationCodes;
+      this.tm = this.defaultData.targetMap;
+      this.m = this.defaultData.militantGroups;
+    }
   }
 
   public convert(text: string): ConversionResult {
@@ -600,11 +620,18 @@ export class ReportConverter {
     return report;
   }
 
-  public saveTables() {
-    localStorage.setItem('actionMapping', JSON.stringify(this.am));
-    localStorage.setItem('locationCodes', JSON.stringify(this.lc));
-    localStorage.setItem('targetMapping', JSON.stringify(this.tm));
-    localStorage.setItem('militantGroups', JSON.stringify(this.m));
+  public async saveTables() {
+    try {
+      const { db } = await import('./database');
+      await db.saveConfiguration({
+        actionMapping: this.am,
+        locationCodes: this.lc,
+        targetMapping: this.tm,
+        militantGroups: this.m
+      });
+    } catch (error) {
+      console.error('Error saving configuration to database:', error);
+    }
   }
 
   public resetToDefaults() {

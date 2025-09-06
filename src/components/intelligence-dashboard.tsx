@@ -3,6 +3,7 @@ import { Printer, BrainCircuit, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ReportConverter, ValidatedReport } from '@/lib/report-converter';
+import { db } from '@/lib/database';
 
 interface IntelligenceDashboardProps {
   converter: ReportConverter;
@@ -29,53 +30,31 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({
 
   console.log('Dashboard rendered, reports:', reports.length);
 
-  const loadReports = () => {
-    const saved = localStorage.getItem('validatedReports');
-    if (saved) {
-      try {
-        const validatedReports: ValidatedReport[] = JSON.parse(saved);
-        // Fix Set deserialization issue - convert arrays back to Sets
-        const fixedReports = validatedReports.map(report => ({
-          ...report,
-          analysis: {
-            ...report.analysis,
-            c: new Set(Array.isArray(report.analysis.c) ? report.analysis.c : []),
-            d: new Set(Array.isArray(report.analysis.d) ? report.analysis.d : [])
-          }
-        }));
-        setReports(fixedReports);
-        calculateKPIs(fixedReports);
-        generateForecast(fixedReports);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      }
-    }
-  };
-
+  // Load reports from database on component mount and listen for updates
   useEffect(() => {
-    loadReports();
-
-    // Listen for storage changes from other tabs/components
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'validatedReports') {
-        loadReports();
-      }
+    loadReportsFromDB();
+    
+    const handleReportsUpdate = () => {
+      loadReportsFromDB();
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('reportsUpdated', handleReportsUpdate);
     
-    // Also listen for custom events (for same-tab updates)
-    const handleCustomUpdate = () => {
-      loadReports();
-    };
-    
-    window.addEventListener('reportsUpdated', handleCustomUpdate);
-
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('reportsUpdated', handleCustomUpdate);
+      window.removeEventListener('reportsUpdated', handleReportsUpdate);
     };
   }, []);
+
+  const loadReportsFromDB = async () => {
+    try {
+      const reportData = await db.loadReports();
+      setReports(reportData);
+      calculateKPIs(reportData);
+      generateForecast(reportData);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    }
+  };
 
   const calculateKPIs = (reports: ValidatedReport[]) => {
     if (reports.length === 0) return;
