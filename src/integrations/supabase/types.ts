@@ -14,7 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      reports: {
+        Row: {
+          analysis: Json
+          created_at: string
+          id: string
+          location: string | null
+          output: string
+          raw_input: string
+          threat_level: string | null
+          timestamp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis: Json
+          created_at?: string
+          id?: string
+          location?: string | null
+          output: string
+          raw_input: string
+          threat_level?: string | null
+          timestamp: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis?: Json
+          created_at?: string
+          id?: string
+          location?: string | null
+          output?: string
+          raw_input?: string
+          threat_level?: string | null
+          timestamp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_configurations: {
+        Row: {
+          action_mapping: Json | null
+          created_at: string
+          id: string
+          location_codes: Json | null
+          militant_groups: Json | null
+          target_mapping: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_mapping?: Json | null
+          created_at?: string
+          id?: string
+          location_codes?: Json | null
+          militant_groups?: Json | null
+          target_mapping?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_mapping?: Json | null
+          created_at?: string
+          id?: string
+          location_codes?: Json | null
+          militant_groups?: Json | null
+          target_mapping?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
