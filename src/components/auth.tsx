@@ -93,7 +93,7 @@ export const Auth: React.FC<AuthProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-intel-dark flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-intel-cyan">Loading...</div>
       </div>
     );
@@ -101,7 +101,7 @@ export const Auth: React.FC<AuthProps> = ({ children }) => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-intel-dark flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="tactical-card w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -177,7 +177,7 @@ export const Auth: React.FC<AuthProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-intel-dark">
+    <div className="min-h-screen bg-background">
       {/* User info bar */}
       <div className="bg-background-secondary border-b border-border px-4 py-2">
         <div className="flex justify-between items-center max-w-7xl mx-auto">
